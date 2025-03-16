@@ -1,63 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roleta de Sorte</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
+    <title>Login com Google</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-auth.js"></script>
 </head>
 <body>
-
-    <script>
-         <div id="google-signin-button"></div>
-        
-  function handleCredentialResponse(response) {
-    // Aqui você pode obter o token de ID
-    const responsePayload = jwt_decode(response.credential);
-    console.log("Usuário logado:", responsePayload);
-    
-    // Enviar o token para o seu backend ou redirecionar o usuário
-    // Exemplo:
-    // window.location.href = "/pagina-de-boas-vindas"; // Redireciona após login
-  }
-
-  window.onload = function () {
-    google.accounts.id.initialize({
-      client_id: 'SEU_ID_CLIENTE_GOOGLE_AQUI',
-      callback: handleCredentialResponse
-    });
-
-    google.accounts.id.renderButton(
-      document.getElementById("google-signin-button"),
-      { theme: "outline", size: "large" }  // Customize o botão
-    );
-
-    google.accounts.id.prompt();  // Exibe a janela de login automaticamente se necessário
-  };
-</script>
-     
-    <div class="container">
-        <h1>Roleta de Sorte</h1>
-        <p>Depositar R$5 para rodar a roleta e ganhar até 500 moedas!</p>
-        
-        <!-- QR Code -->
-        <div id="qrcode-container">
-            <h3>Escaneie para Depósito:</h3>
-            <img id="qrcode" src="QR_CODE_URL_AQUI" alt="QR Code">
-        </div>
-
-        <div id="roleta-container">
-            <canvas id="roleta" width="400" height="400"></canvas>
-            <button id="girar-btn" onclick="girarRoleta()">Girar Roleta</button>
-        </div>
-
-        <p id="moedas">Você tem 0 moedas.</p>
-        <p id="resultado">Resultado: </p>
+    <h1>Login com Google</h1>
+    <button id="login-btn">Login com Google</button>
+    <div id="user-info" style="display:none;">
+        <h2>Bem-vindo, <span id="user-name"></span></h2>
+        <img id="user-photo" />
+        <button id="logout-btn">Sair</button>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNFjk5-kg90fSC2D2cXZHtk-IUaLIFLRo",
+            authDomain: "com.projectroleta",
+            projectId: "meuprojetoderoleta",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "583637041856",
+            appId: "meuprojetoderoleta",
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Função de login
+        const loginBtn = document.getElementById("login-btn");
+        const userInfo = document.getElementById("user-info");
+        const userName = document.getElementById("user-name");
+        const userPhoto = document.getElementById("user-photo");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        // Login com Google
+        loginBtn.addEventListener("click", () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    userName.textContent = user.displayName;
+                    userPhoto.src = user.photoURL;
+                    loginBtn.style.display = "none";
+                    userInfo.style.display = "block";
+                })
+                .catch((error) => {
+                    console.log(error.message);
+                });
+        });
+
+        // Logout
+        logoutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                loginBtn.style.display = "block";
+                userInfo.style.display = "none";
+            });
+        });
+
+        // Verificar se o usuário está logado
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                userName.textContent = user.displayName;
+                userPhoto.src = user.photoURL;
+                loginBtn.style.display = "none";
+                userInfo.style.display = "block";
+            } else {
+                loginBtn.style.display = "block";
+                userInfo.style.display = "none";
+            }
+        });
+    </script>
 </body>
 </html>
