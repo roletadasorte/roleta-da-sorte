@@ -55,8 +55,8 @@
             margin-top: 20px;
         }
         #roulette {
-            width: 400px;
-            height: 400px;
+            width: 300px;
+            height: 300px;
             border: 10px solid #fff;
             border-radius: 50%;
             position: relative;
@@ -68,8 +68,8 @@
         }
         .roulette-slot {
             position: absolute;
-            width: 6%;
-            height: 6%;
+            width: 15%;
+            height: 15%;
             background-color: #f44336;
             transform-origin: 50% 100%;
         }
@@ -123,12 +123,12 @@
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyBNFjk5-kg90fSC2D2cXZHtk-IUaLIFLRo",
-            authDomain: "meuprojetoderoleta.firebaseapp.com",
-            projectId: "meuprojetoderoleta",
-            storageBucket: "meuprojetoderoleta.appspot.com",
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJECT_ID.firebaseapp.com",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_PROJECT_ID.appspot.com",
             messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-            appId: "1:583637041856:android:2d80a3b1136adf85da6325",
+            appId: "SEU_APP_ID",
         };
 
         // Inicializa o Firebase
@@ -144,17 +144,18 @@
         const userCoins = document.getElementById("user-coins");
         const logoutBtn = document.getElementById("logout-btn");
         const spinBtn = document.getElementById("spin-btn");
+        const roulette = document.getElementById("roulette");
 
         // Função para criar a roleta com 50 casas
         function createRoulette() {
-            const roulette = document.getElementById("roulette");
             const slots = 50; // 50 casas
             const anglePerSlot = 360 / slots;
+            roulette.innerHTML = '';  // Limpar roleta existente
 
             for (let i = 0; i < slots; i++) {
                 const slot = document.createElement("div");
                 slot.classList.add("roulette-slot");
-                slot.style.transform = `rotate(${i * anglePerSlot}deg) translateY(-180px) rotate(-${i * anglePerSlot}deg)`;
+                slot.style.transform = `rotate(${i * anglePerSlot}deg) translateY(-140px) rotate(-${i * anglePerSlot}deg)`;
 
                 const slotNumber = document.createElement("span");
                 slotNumber.classList.add("slot-number");
@@ -237,15 +238,22 @@
                     const newCoinCount = doc.data().coins - 5;
                     userDocRef.update({ coins: newCoinCount });
 
-                    // Girar a roleta (99% chance de 0 moedas e 1% de até 500 moedas)
-                    const result = Math.random() < 0.99 ? 0 : Math.floor(Math.random() * 501);
-                    alert(`Você ganhou ${result} moedas!`);
+                    // Simulação de rotação
+                    const degrees = Math.floor(Math.random() * 360) + 720; // 720 para garantir que gire pelo menos 2 voltas
+                    roulette.style.transition = "transform 4s ease-out";
+                    roulette.style.transform = `rotate(${degrees}deg)`;
 
-                    // Atualizar as moedas do usuário no Firestore
-                    userDocRef.update({ coins: newCoinCount + result });
+                    // Quando a roleta parar, gerar um número de moedas aleatórias (0-500)
+                    setTimeout(() => {
+                        const result = Math.random() < 0.99 ? 0 : Math.floor(Math.random() * 501);
+                        alert(`Você ganhou ${result} moedas!`);
 
-                    // Atualizar exibição das moedas
-                    userCoins.textContent = `Moedas: ${newCoinCount + result}`;
+                        // Atualizar as moedas do usuário no Firestore
+                        userDocRef.update({ coins: newCoinCount + result });
+
+                        // Atualizar exibição das moedas
+                        userCoins.textContent = `Moedas: ${newCoinCount + result}`;
+                    }, 4000); // Tempo para roleta girar (4 segundos)
                 } else {
                     alert("Você precisa de pelo menos 5 moedas para girar a roleta!");
                 }
