@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta de Sorte</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script>
+        function handleCredentialResponse(response) {
+          // Aqui você pode obter o token de ID
+          const responsePayload = jwt_decode(response.credential);
+          console.log("Usuário logado:", responsePayload);
+          
+          // Enviar o token para o seu backend ou redirecionar o usuário
+          // Exemplo:
+          // window.location.href = "/pagina-de-boas-vindas"; // Redireciona após login
+        }
+      
+        window.onload = function () {
+          google.accounts.id.initialize({
+            client_id: 'SEU_ID_CLIENTE_GOOGLE_AQUI',
+            callback: handleCredentialResponse
+          });
+      
+          google.accounts.id.renderButton(
+            document.getElementById("google-signin-button"),
+            { theme: "outline", size: "large" }  // Customize o botão
+          );
+      
+          google.accounts.id.prompt();  // Exibe a janela de login automaticamente se necessário
+        };
+      </script>      
+    <div class="container">
+        <h1>Roleta de Sorte</h1>
+        <p>Depositar R$5 para rodar a roleta e ganhar até 500 moedas!</p>
+        
+        <!-- QR Code -->
+        <div id="qrcode-container">
+            <h3>Escaneie para Depósito:</h3>
+            <img id="qrcode" src="QR_CODE_URL_AQUI" alt="QR Code">
+        </div>
+
+        <div id="roleta-container">
+            <canvas id="roleta" width="400" height="400"></canvas>
+            <button id="girar-btn" onclick="girarRoleta()">Girar Roleta</button>
+        </div>
+
+        <p id="moedas">Você tem 0 moedas.</p>
+        <p id="resultado">Resultado: </p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
