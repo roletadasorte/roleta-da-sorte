@@ -1,42 +1,90 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login com Google</title>
+    <title>Site de Jogo com Roleta</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore.js"></script>
+    <style>
+        #user-info {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+        }
+        #user-info img {
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        #roulette-container {
+            margin-top: 20px;
+        }
+        #roulette {
+            width: 500px;
+            height: 500px;
+            border: 10px solid #000;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #deposit-container {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Login com Google</h1>
+    <h1>Bem-vindo ao Jogo de Roleta</h1>
+
+    <!-- Login -->
     <button id="login-btn">Login com Google</button>
+
+    <!-- Informações do Usuário -->
     <div id="user-info" style="display:none;">
-        <h2>Bem-vindo, <span id="user-name"></span></h2>
-        <img id="user-photo" />
-        <button id="logout-btn">Sair</button>
+        <img id="user-photo" width="40" height="40" />
+        <span id="user-name"></span>
+        <span id="user-coins">Moedas: 0</span>
+        <button id="logout-btn">Logout</button>
+    </div>
+
+    <!-- Roleta -->
+    <button id="spin-btn">Girar Roleta</button>
+    <div id="roulette-container">
+        <div id="roulette"></div>
+    </div>
+
+    <!-- Depósito via Pix -->
+    <div id="deposit-container">
+        <h2>Depósito via Pix</h2>
+        <p>Para depositar, escaneie o QR Code abaixo:</p>
+        <img src="SEU_QR_CODE.png" alt="QRCode Pix" width="200" />
+        <p>Ou use a chave Pix: chavepix@dominio.com</p>
     </div>
 
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBNFjk5-kg90fSC2D2cXZHtk-IUaLIFLRo",
-            authDomain: "com.projectroleta",
+            authDomain: "meuprojetoderoleta.firebaseapp.com",
             projectId: "meuprojetoderoleta",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "583637041856",
-            appId: "meuprojetoderoleta",
+            storageBucket: "meuprojetoderoleta.appspot.com",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "1:583637041856:android:2d80a3b1136adf85da6325",
         };
-
-        // Inicializar Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        // Função de login
+        // Elementos HTML
         const loginBtn = document.getElementById("login-btn");
         const userInfo = document.getElementById("user-info");
         const userName = document.getElementById("user-name");
         const userPhoto = document.getElementById("user-photo");
+        const userCoins = document.getElementById("user-coins");
         const logoutBtn = document.getElementById("logout-btn");
+        const spinBtn = document.getElementById("spin-btn");
 
         // Login com Google
         loginBtn.addEventListener("click", () => {
@@ -46,11 +94,22 @@
                     const user = result.user;
                     userName.textContent = user.displayName;
                     userPhoto.src = user.photoURL;
-                    loginBtn.style.display = "none";
                     userInfo.style.display = "block";
+                    loginBtn.style.display = "none";
+
+                    // Verificar e criar o documento do usuário no Firestore
+                    const userDocRef = db.collection("users").doc(user.uid);
+                    userDocRef.get().then((doc) => {
+                        if (doc.exists) {
+                            userCoins.textContent = `Moedas: ${doc.data().coins}`;
+                        } else {
+                            userDocRef.set({ coins: 0 });
+                            userCoins.textContent = "Moedas: 0";
+                        }
+                    });
                 })
                 .catch((error) => {
-                    console.log(error.message);
+                    console.error(error.message);
                 });
         });
 
@@ -62,17 +121,56 @@
             });
         });
 
-        // Verificar se o usuário está logado
+        // Atualizar UI após login
         auth.onAuthStateChanged((user) => {
             if (user) {
                 userName.textContent = user.displayName;
                 userPhoto.src = user.photoURL;
-                loginBtn.style.display = "none";
                 userInfo.style.display = "block";
+                loginBtn.style.display = "none";
+
+                // Atualizar moedas do usuário
+                const userDocRef = db.collection("users").doc(user.uid);
+                userDocRef.get().then((doc) => {
+                    if (doc.exists) {
+                        userCoins.textContent = `Moedas: ${doc.data().coins}`;
+                    }
+                });
             } else {
                 loginBtn.style.display = "block";
                 userInfo.style.display = "none";
             }
+        });
+
+        // Girar a Roleta
+        spinBtn.addEventListener("click", function() {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                alert("Por favor, faça login para jogar!");
+                return;
+            }
+
+            // Verificar se o usuário tem moedas suficientes para jogar
+            const userDocRef = db.collection("users").doc(user.uid);
+            userDocRef.get().then((doc) => {
+                if (doc.exists && doc.data().coins >= 5) {
+                    // Subtrair 5 moedas para girar a roleta
+                    const newCoinCount = doc.data().coins - 5;
+                    userDocRef.update({ coins: newCoinCount });
+
+                    // Girar a roleta (99% chance de 0 moedas e 1% de até 500 moedas)
+                    const result = Math.random() < 0.99 ? 0 : Math.floor(Math.random() * 501);
+                    alert(`Você ganhou ${result} moedas!`);
+
+                    // Atualizar as moedas do usuário no Firestore
+                    userDocRef.update({ coins: newCoinCount + result });
+
+                    // Atualizar exibição das moedas
+                    userCoins.textContent = `Moedas: ${newCoinCount + result}`;
+                } else {
+                    alert("Você precisa de pelo menos 5 moedas para girar a roleta!");
+                }
+            });
         });
     </script>
 </body>
